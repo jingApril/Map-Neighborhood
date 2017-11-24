@@ -1,43 +1,66 @@
-/*var locations = [
-    ['Bondi Beach', -33.890542, 151.274856, 4],
-    ['Coogee Beach', -33.923036, 151.259052, 5],
-    ['Cronulla Beach', -34.028249, 151.157507, 3],
-    ['Manly Beach', -33.80010128657071, 151.28747820854187, 2],
-    ['Maroubra Beach', -33.950198, 151.259302, 1]
-];*/
+var favorites = [
+    ['九华山公园', 32.059589, 118.806982, 8],
+    ['紫金山', 32.070475, 118.853296, 7],
+    ['玄武湖', 32.066879, 118.804326, 6],
+    ['鼓楼医院', 32.063115, 118.778222, 5],
+    ['南京大学', 32.055763, 118.780057, 4],
+    ['东南大学', 32.055982, 118.794211, 3],
+    ['大行宫', 32.04097, 118.794822, 2],
+    ['新街口', 32.042038, 118.78407, 1]
+];
+var map;
+var markers = [];
+
 
 function initMap() {
 
-    var map;
+    myPosition1 = {
+        lat: 32.066335,
+        lng: 118.76979
+    };
 
-    myPosition1 = { lat: 31.968789, lng: 118.798537 };
     map = new google.maps.Map(document.getElementById('map'), {
         center: myPosition1,
-        zoom: 12
+        zoom: 13
     });
 
-
-    var favorites = [
-        {lat: 32.056134, lng: 118.783043 }];
-
-    var infowindow = new google.maps.InfoWindow();
-
-    var marker, i;
-
-    for (i = 0; i < favorites.length; i++) {
-        marker = new google.maps.Marker({
-            position: new google.maps.LatLng(favorites[i].lat, favorites[i].lng),
-            map: map，
-            title: 'Hello World!'
-        });
-
-        google.maps.event.addListener(marker, 'click', (function(marker, i) {
-            return function() {
-                infowindow.setContent(favorites[i][0]);
-                infowindow.open(map, marker);
-            }
-        })(marker, i));
-
-    }
+    drop();
 
 }
+
+function drop() {
+    clearMarkers();
+    for (var i = 0; i < favorites.length; i++) {
+        addMarkerWithTimeout(favorites[i], i * 200);
+        console.log(favorites[i]);
+    }
+}
+
+
+function addMarkerWithTimeout(position, timeout) {
+    window.setTimeout(function() {
+        markers.push(new google.maps.Marker({
+            position: new google.maps.LatLng(position[1], position[2]),
+            map: map,
+            animation: google.maps.Animation.DROP
+        }));
+
+    }, timeout);
+}
+
+function clearMarkers() {
+    for (var i = 0; i < markers.length; i++) {
+        markers[i].setMap(null);
+    }
+    markers = [];
+}
+
+
+var infowindow = new google.maps.InfoWindow();
+
+
+
+var marker = markers
+marker.addListener('click', function() {
+    infowindow.open(map, marker);
+});
