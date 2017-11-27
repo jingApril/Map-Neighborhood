@@ -1,61 +1,162 @@
-  function init() {
-      // 创建地图对象
-      var map = new AMap.Map('container', {
-          center: [118.798537, 31.968789],
-          zoom: 11
-      });
-
-      map.plugin(["AMap.ToolBar"], function() {
-          // 添加 工具条
-          map.addControl(new AMap.ToolBar());
-      });
-
-      //创建标记集合
-      var markers = [{
-          title: '鼓楼',
-          position: [118.783043, 32.056134]
-      }, {
-          title: '南京大学',
-          position: [118.77943, 32.055015]
-      }, {
-          title: '东南大学',
-          position: [118.79484, 32.054227]
-      }, {
-          title: '鼓楼医院',
-          position: [118.783043, 32.056134]
-      }, {
-          title: '玄武湖',
-          position: [118.798908, 32.072357]
-      }];
-
-      //创建 默认信息窗口
-      var infoWindow = new AMap.InfoWindow({
-          offset: new AMap.Pixel(0, -30)
-      });
-
-      // 构建标记
-      markers.forEach(function(marker) {
-
-          var newMarker = new AMap.Marker({
-              map: map,
-              position: [marker.position[0], marker.position[1]],
-              title: marker.title,
-              icon: "http://webapi.amap.com/theme/v1.3/markers/n/mark_b.png",
-              offset: new AMap.Pixel(-12, -36)
-          });
-
-          newMarker.content = "这里是" + marker.title;
-
-          //为标记绑定 点击事件
-          newMarker.on('click', markerClick);
-      });
+var favorites = [
+    ['九华山公园', 32.059589, 118.806982, 8],
+    ['紫金山', 32.070475, 118.853296, 7],
+    ['玄武湖', 32.066879, 118.804326, 6],
+    ['鼓楼医院', 32.063115, 118.778222, 5],
+    ['南京大学', 32.055763, 118.780057, 4],
+    ['东南大学', 32.055982, 118.794211, 3],
+    ['大行宫', 32.04097, 118.794822, 2],
+    ['新街口', 32.042038, 118.78407, 1]
+];
 
 
-      //点击事件方法主体
-      function markerClick(e) {
-          infoWindow.setContent(e.target.content);
-          infoWindow.open(map, e.target.getPosition());
-      }
-      //自动缩放地图到合适的视野级别
-      map.setFitView();
+var AddressModel = function() {
+
+this.marker = ko.observable();
+
+this.location = ko.observable();
+
+this.streetNumber = ko.observable();
+
+this.streetName = ko.observable();
+
+this.city = ko.observable();
+
+this.state = ko.observable();
+
+this.postCode = ko.observable();
+
+this.country = ko.observable();
+
+};
+var map;
+var marker;
+var markers = [];
+
+function initMap() {
+
+    myPosition1 = {
+        lat: 32.066335,
+        lng: 118.76979
+    };
+
+    map = new google.maps.Map(document.getElementById('map'), {
+        center: myPosition1,
+        zoom: 13
+    });
+
+    for (var i = 0; i < favorites.length; i++) {
+        var tmpLat = favorites[i][1];
+        var tmpLng = favorites[i][2];
+        var tmpName = favorites[i][0];
+        var marker = addMarker({
+            _map: map,
+            _lat: tmpLat,
+            _lng: tmpLng,
+            _head: '|' + new google.maps.LatLng(tmpLat, tmpLng),
+            _data: '<h4 class="title">' + tmpName + '</h4>'
+        });
+    }
+}
+
+
+/*
+function drop() {
+    for (var i = 0; i < favorites.length; i++) {
+        //createMarker(favorites[i][1], favorites[i][2], favorites[i][0], i);
+        addMarkerWithTimeout(favorites[i], i * 200);
+
+    }
+}
+
+function addMarkerWithTimeout(position, timeout) {
+    window.setTimeout(function() {
+        markers.push(new google.maps.Marker({
+            position: new google.maps.LatLng(position[1], position[2]),
+            map: map,
+            icon: 'https://maps.google.com/mapfiles/kml/shapes/parking_lot_maps.png',
+            title: html,
+            animation: google.maps.Animation.DROP
+          }));
+    }, timeout);
+}
+*/
+
+/*function markerClick(position) {
+
+  for (var i = 0; i < markers.length; i++) {
+      var infowindow = new google.maps.InfoWindow({
+            content: position[0]
+        });
+
+        marker.addListener('click', function() {
+            infowindow.open(map, marker);
+        });
+      marker.setAnimation(google.maps.Animation.BOUNCE);
+        setTimeout(function() {
+                marker.setAnimation(null)
+        }, 750);
   }
+
+
+}
+*/
+
+
+
+function addMarker(param) {
+    var r = new google.maps.Marker({
+        map: param._map,
+        position: new google.maps.LatLng(param._lat, param._lng),
+        icon: 'https://maps.google.com/mapfiles/kml/shapes/parking_lot_maps.png',
+        title: param._head,
+        animation: google.maps.Animation.DROP
+    });
+    if (param._data) {
+        google.maps.event.addListener(r, 'click', function() {
+            // this -> the marker on which the onclick event is being attached
+            if (!this.getMap()._infoWindow) {
+                this.getMap()._infoWindow = new google.maps.InfoWindow();
+                //stopAnimation(this);
+
+            }
+            this.getMap()._infoWindow.close();
+            stopAnimation(this);
+            this.getMap()._infoWindow.setContent(param._data);
+            this.getMap()._infoWindow.open(this.getMap(), this);
+            this.setAnimation(google.maps.Animation.BOUNCE);
+        });
+        return r;
+   }
+}
+
+//设置pin的时间
+function stopAnimation(marker) {
+    setTimeout(function() {
+        marker.setAnimation(null);
+    }, 750);
+}
+
+// 产生标注并点击出现信息
+/*function addMarkerWithTimeout(position, timeout) {
+    window.setTimeout(function() {
+        marker = new google.maps.Marker({
+            position: new google.maps.LatLng(position[1], position[2]),
+            map: map,
+            icon: 'https://maps.google.com/mapfiles/kml/shapes/parking_lot_maps.png',
+            title: position[0],
+            animation: google.maps.Animation.DROP
+        });
+    }, timeout);
+}*/
+
+// 使用knockout 添加数据
+function ViewModel() {
+    var self = this;
+    self.favorites = ko.observableArray(favorites);
+    self.mc = function() {
+             addMarker(this);
+         }
+}
+ko.applyBindings(new ViewModel());
+ko.applyBindings(addCiniViewModel, document.getElementById("AddCiniForm"));
