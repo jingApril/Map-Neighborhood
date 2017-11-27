@@ -8,83 +8,132 @@ var favorites = [
     ['大行宫', 32.04097, 118.794822, 2],
     ['新街口', 32.042038, 118.78407, 1]
 ];
-
-
-function loc(f) {
-   var self = this;
-   this.lat = ko.observable(f[1]);
-   this.lng = ko.observable(f[2]);
-   this.title = ko.observable(f[0]);
- }
-
 var map;
 var marker;
 var markers = [];
 
+//初始化map
 function initMap() {
 
-    myPosition1 = {
+    myPosition = {
         lat: 32.066335,
         lng: 118.76979
     };
 
     map = new google.maps.Map(document.getElementById('map'), {
-        center: myPosition1,
+        center: myPosition,
         zoom: 13
     });
 
-    for (var i = 0; i < favorites.length; i++) {
-        var tmpLat = favorites[i][1];
-        var tmpLng = favorites[i][2];
-        var tmpName = favorites[i][0];
-        var marker = addMarker({
-            _map: map,
-            _lat: tmpLat,
-            _lng: tmpLng,
-            _head: '|' + new google.maps.LatLng(tmpLat, tmpLng),
-            _data: '<h4 class="title">' + tmpName + '</h4>'
-        });
+
+    var stringStartsWith = function(string, startsWith) {
+        string = string || "";
+        if (startsWith.length > string.length)
+            return false;
+        return string.substring(0, startsWith.length) === startsWith;
+    };
+
+    // 开始建立viewmode
+    var ViewModel = function() {
+
+        var self = this;
+        this.search = ko.observable('');
+        this.locList = ko.observableArray(favorites);
+
+        this.filteredlocList = ko.computed(function() {
+
+            //取索搜框的值
+            var filter = self.search();
+            var unwrappedLocList = ko.toJS(self.locList);
+
+            // 在地图上显示各个地标
+            for (var i = 0; i < unwrappedLocList.length; i++) {
+                var tmpLat = unwrappedLocList[i][1];
+                var tmpLng = unwrappedLocList[i][2];
+                var tmpName = unwrappedLocList[i][0];
+                //调用添加地标函数
+                var marker = addMarker({
+                    _map: map,
+                    _lat: tmpLat,
+                    _lng: tmpLng,
+                    _id: i,
+                    _head: tmpName,
+                    _data: '<h4 class="title">' + tmpName + '</h4>'
+                });
+                //每生产一个地标放进 markers数组里
+                markers.push(marker);
+            }
+
+            //取索搜框的值
+            if (filter != "") {
+                return unwrappedLocList
+            } else {
+                return ko.utils.arrayFilter(unwrappedLocList, function(item) {
+                    return stringStartsWith(item.title, filter);
+                });
+            }
+
+        }, this);
+
+
+        // 左侧地标点击函数
+        this.setLoc = function(clickedLoc) {
+
+            var unwrappedLoc = ko.toJS(clickedLoc);
+            var unwrappedLocList = ko.toJS(self.locList);
+
+            for (var i = 0; i < unwrappedLocList.length; i++) {
+                if (unwrappedLoc[0] == markers[i].title) {
+                    pinMarker(unwrappedLoc[0], markers[i]);
+                    return;
+                }
+            };
+        }
+
     }
 
-/*  ko.applyBindings(vm);
-   $.each(data, function(i, item) {
-     vm.points.push(new point(item.tag, item.name, item.location))
-   })*/
-}
-
-
-function addMarker(param) {
-    var r = new google.maps.Marker({
-        map: param._map,
-        position: new google.maps.LatLng(param._lat, param._lng),
-        icon: 'https://maps.google.com/mapfiles/kml/shapes/parking_lot_maps.png',
-        title: param._head,
-        animation: google.maps.Animation.DROP
-    });
-    if (param._data) {
-        google.maps.event.addListener(r, 'click', function() {
-            // this -> the marker on which the onclick event is being attached
-            if (!this.getMap()._infoWindow) {
-                this.getMap()._infoWindow = new google.maps.InfoWindow();
-                //stopAnimation(this);
-
-            }
-            this.getMap()._infoWindow.close();
-            stopAnimation(this);
-            this.getMap()._infoWindow.setContent(param._data);
-            this.getMap()._infoWindow.open(this.getMap(), this);
-            this.setAnimation(google.maps.Animation.BOUNCE);
+    // 添加marker
+    function addMarker(param) {
+        var r = new google.maps.Marker({
+            map: param._map,
+            position: new google.maps.LatLng(param._lat, param._lng),
+            icon: 'https://maps.google.com/mapfiles/kml/shapes/parking_lot_maps.png',
+            title: param._head,
+            animation: google.maps.Animation.DROP
         });
-        return r;
-   }
+
+        if (param._data) {
+            google.maps.event.addListener(r, 'click', function() {
+                // 调用 marker的动作
+                pinMarker(param._data, r);
+            });
+            return r;
+        }
+    }
+
+    // pin的动作
+    function pinMarker(e, r) {
+        if (!r.getMap()._infoWindow) {
+            r.getMap()._infoWindow = new google.maps.InfoWindow();
+        }
+
+        r.getMap()._infoWindow.close();
+        stopAnimation(r);
+        r.getMap()._infoWindow.setContent(e);
+        r.getMap()._infoWindow.open(r.getMap(), r);
+        r.setAnimation(google.maps.Animation.BOUNCE);
+    }
+
+    ko.applyBindings(new ViewModel());
 }
+
 
 //设置pin的时间
 function stopAnimation(marker) {
     setTimeout(function() {
         marker.setAnimation(null);
     }, 750);
-}
+};
 
 // 产生标注并点击出现信息
 /*function addMarkerWithTimeout(position, timeout) {
@@ -98,13 +147,3 @@ function stopAnimation(marker) {
         });
     }, timeout);
 }*/
-
-// 使用knockout 添加数据
-function ViewModel() {
-    var self = this;
-    self.favorites = ko.observableArray(favorites);
-    self.mc = function() {
-             addMarker(this);
-         }
-}
-ko.applyBindings(new ViewModel());
