@@ -126,6 +126,21 @@
             vm.locList.push(new Loc(locItem))
         });
     };
+
+
+// 产生标注并点击出现信息
+/*function addMarkerWithTimeout(position, timeout) {
+    window.setTimeout(function() {
+        marker = new google.maps.Marker({
+            position: new google.maps.LatLng(position[1], position[2]),
+            map: map,
+            icon: 'https://maps.google.com/mapfiles/kml/shapes/parking_lot_maps.png',
+            title: position[0],
+            animation: google.maps.Animation.DROP
+        });
+    }, timeout);
+}*/
+
     </script>
     <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js">
     </script>
