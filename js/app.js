@@ -1,4 +1,44 @@
  //数据
+ jQuery(document).ready(function($) {
+
+     $.ajax({
+         url: "https://zh.wikipedia.org/w/api.php",
+         data: {
+             format: "json",
+             action: "parse",
+             page: "南京鼓楼医院",
+             prop: "text",
+             section: 0,
+         },
+         dataType: 'jsonp',
+         headers: {
+             'Api-User-Agent': 'MyCoolTool/1.1 (http://example.com/MyCoolTool/; MyCoolTool@example.com) BasedOnSuperLib/1.4'
+         },
+         success: function(data) {
+             console.log(data)
+             //      $("#article").html(data.parse.text["*"])
+
+             var markup = data.parse.text["*"];
+             var i = $('<div></div>').html(markup);
+
+             // remove links as they will not work
+             i.find('a').each(function() { $(this).replaceWith($(this).html()); });
+
+             // remove any references
+             i.find('sup').remove();
+
+             // remove cite error
+             i.find('.mw-ext-cite-error').remove();
+
+             $('#article').html($(i).find('p'));
+
+
+         }
+     });
+
+ });
+
+
  var map;
  var marker;
  var markers = [];
@@ -101,17 +141,17 @@
      };
 
 
-      markers.map(function(marker){
-     marker.setVisible(true)
- })
+     markers.map(function(marker) {
+         marker.setVisible(true)
+     })
 
      function MyViewModel() {
          var self = this;
          var reg = /[\u4E00-\u9FA5\uF900-\uFA2D]/;
 
-        /*          markers.map(function(marker){
-             marker.setVisible(true)
-         })*/
+         /*          markers.map(function(marker){
+              marker.setVisible(true)
+          })*/
 
          self.query = ko.observable('');
          self.locList = ko.observableArray(favorites);
@@ -130,7 +170,7 @@
 
                  var filteredList = unwrappedLocList.filter(function(item) {
                      // 判断搜索的字符与列表地名是否匹配
-                     var matched = item[0].indexOf(filter) !== -1;
+                    var matched = item[0].indexOf(filter) !== -1;
                      // 找到对应的 marker
                      var marker = markers.find(function(marker) {
                          return marker.title == item[0]
