@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<title>Examples</title>
+<meta name="description" content="">
+<meta name="keywords" content="">
+<link href="" rel="stylesheet">
+<script src="js/1.7.1/jquery.min.js"></script>
+</head>
+<body>
+    <ul>
+    	<li></li>
+    	<li></li>
+    	<li></li>
+    	<li></li>
+    </ul>
+    <script>
+    	for (var j = 0; j < favorites.length; j++) {
+         $.ajax({
+             url: "https://zh.wikipedia.org/w/api.php",
+             data: {
+                 format: "json",
+                 action: "parse",
+                 //page: favorites[i][0],
+                 page: "大行宫",
+                 prop: "text",
+                 section: 0,
+             },
+             dataType: 'jsonp',
+             contentType: "application/json; charset=utf-8",
+             dataType: "jsonp",
+             success: function(data) {
+                 console.log(data)
+                 //      $("#article").html(data.parse.text["*"])
+
+                 var markup = data.parse.text["*"];
+                 var x = $('<div></div>').html(markup);
+                 //var x = markup;
+
+                 // remove links as they will not work
+                 x.find('a').each(function() { $(this).replaceWith($(this).html()); });
+
+                 // remove any references
+                 x.find('sup').remove();
+
+                 // remove cite error
+                 x.find('.mw-ext-cite-error').remove();
+
+                 //var content = $(x).find('p');
+                 $("li").eq(j).html($(x).find('p'));
+                 //$('li').eq(i).html(content);
+
+             },
+             error: function(errorMessage) {
+
+             }
+         });
+ }
+    </script>
+</body>
+</html>

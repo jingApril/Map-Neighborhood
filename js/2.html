@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Examples</title>
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <link href="" rel="stylesheet">
+    <script src="jquery-3.2.1.min.js"></script>
+</head>
+
+<body>
+    <ul>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+    </ul>
+    <script>
+    var favorites = [
+        ['白马公园', 32.059589, 118.806982, 10],
+        ['南京站', 32.086727, 118.796834, 9],
+        ['南京紫峰大厦', 32.072683, 118.783387, 8],
+        ['紫金山', 32.070475, 118.853296, 7],
+        ['玄武湖', 32.066879, 118.804326, 6],
+        ['南京鼓楼医院', 32.063115, 118.778222, 5],
+        ['南京大学', 32.055763, 118.780057, 4],
+        ['东南大学', 32.055982, 118.794211, 3],
+        ['大行宫', 32.04097, 118.794822, 2],
+        ['德基大厦', 32.042038, 118.78407, 1]
+    ];
+
+    function wiki(title) {
+        (function(index) {
+
+            //var title = favorites[i][0];
+            $.ajax({
+
+                url: "https://zh.wikipedia.org/w/api.php",
+                data: {
+                    format: "json",
+                    action: "parse",
+                    page: title,
+                    //page: "大行宫",
+                    prop: "text",
+                    section: 0
+                },
+                dataType: 'jsonp',
+                contentType: "application/json; charset=utf-8",
+                dataType: "jsonp"
+                })
+                //
+                .done( function(data) {
+                    console.log(data)
+                    if (data.parse) {
+
+                        //   $("#article").html(data.parse.text["*"])
+
+                        var markup = data.parse.text["*"];
+                        var x = $('<div></div>').html(markup);
+                        //var x = markup;
+
+                        // remove links as they will not work
+                        x.find('a').each(function() { $(this).replaceWith($(this).html()); });
+
+                        // remove any references
+                        x.find('sup').remove();
+
+                        // remove cite error
+                        x.find('.mw-ext-cite-error').remove();
+
+                        //var content = $(x).find('p');
+                        $("li").eq(0).html($(x).find('p'));
+
+                        return $(x).find('p');
+
+                        //$('li').eq(i).html(content);
+
+                    } else {
+                        //$("li").eq(index).html(title);
+                        return title;
+                    }
+
+             });
+        })();
+    }
+//$('li').eq(0).html(wiki("南京大学"));
+//console.log(wiki("南京大学"));
+//wiki("南京大学");
+
+$('li').eq(0).html(wiki("大行宫"));
+
+    </script>
+</body>
+
+</html>
