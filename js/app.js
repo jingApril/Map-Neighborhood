@@ -1,5 +1,6 @@
  //数据
  var map;
+ var infowindow;
  var marker;
  var markers = [];
 
@@ -15,62 +16,6 @@
      ['大行宫', 32.04097, 118.794822, 2],
      ['新街口', 32.042038, 118.78407, 1]
  ];
- var infowindow;
- var contentString;
- var infowindow;
-
- function wikiData(title) {
-   var contentString
-     $.ajax({
-
-                url: "https://zh.wikipedia.org/w/api.php",
-                data: {
-                    format: "json",
-                    action: "parse",
-                    page: title,
-                    async: false,
-                    //page: "大行宫",
-                    prop: "text",
-                    section: 0
-                },
-                dataType: 'jsonp',
-                contentType: "application/json; charset=utf-8",
-                dataType: "jsonp"
-                })
-                //
-                .done(function(data) {
-                   // console.log(data)
-                    if (data.parse) {
-
-                        //   $("#article").html(data.parse.text["*"])
-
-                        var markup = data.parse.text["*"];
-                        var x = $('<div></div>').html(markup);
-                        //var x = markup;
-
-                        // remove links as they will not work
-                        x.find('a').each(function() { $(this).replaceWith($(this).html()); });
-
-                        // remove any references
-                        x.find('sup').remove();
-
-                        // remove cite error
-                        x.find('.mw-ext-cite-error').remove();
-
-                        //var content = $(x).find('p');
-                        var contentString = $(x).find('p');
-                        //$('li').eq(i).html(content);
-
-                    } else {
-                        //$("li").eq(index).html(title);
-                      var contentString = title;
-                    }
-
-             });
-
-        return contentString;
-         console.log(contentString)
- }
 
  function initMap() {
 
@@ -81,6 +26,8 @@
          },
          zoom: 13
      });
+     //定义地标的信息
+     infoWindow = new google.maps.InfoWindow();
 
      //生产map
      function makeMap(LocList) {
@@ -90,24 +37,21 @@
              var tmpName = LocList[i][0];
              var tmpData = LocList[i][0];
 
-             //调用添加地标函数
+             //调用地标函数
              var marker = addMarker({
                  _map: map,
                  _position: new google.maps.LatLng(tmpLat, tmpLng),
                  _title: tmpName,
                  _data: tmpData
-
              });
-
-             //每生产一个地标放进 markers数组里
+             //每生产一个地标放进markers数组里
              markers.push(marker);
-             console.log(markers)
 
          }
 
      };
 
-     // 添加marker
+     // 生产地标
      function addMarker(param) {
          var r = new google.maps.Marker({
              map: param._map,
@@ -117,39 +61,79 @@
              data: param._data,
              animation: google.maps.Animation.DROP
          });
-
          if (param._data) {
              google.maps.event.addListener(r, 'click', function() {
-                 // 调用 marker的动作
+                 //调用 地标动作和信息
                  pinMarker(param._data, r);
              });
              return r;
          }
      };
 
-     //点击marker弹跳以及弹出信息
+     markers.map(function(marker) {
+         marker.setVisible(true)
+     })
+
+     //点击地标弹跳以及弹出信息的函数
      function pinMarker(e, r) {
+         var contentString;
+         $.ajax({
+             url: "https://zh.wikipedia.org/w/api.php",
+             data: {
+                 format: "json",
+                 action: "parse",
+                 page: e,
+                 async: false,
+                 prop: "text",
+                 section: 0
+             },
+             dataType: 'jsonp',
+             contentType: "application/json; charset=utf-8",
+             dataType: "jsonp",
+             success: function(data) {
+                 if (data.parse) {
+                     //整理提取的数据
+                     var markup = data.parse.text["*"];
+                     var x = $('<div></div>').html(markup);
+                     x.find('a').each(function() {
+                         $(this).replaceWith($(this).html());
+                     });
+                     x.find('sup').remove();
+                     x.find('.mw-ext-cite-error').remove();
+                     contentString = $(x).find('p').text();
+                     infoWindow.setContent(contentString);
+                     infoWindow.open(map, r);
+                     return;
 
-         //wikiData(e)
-         if (!r.getMap()._infoWindow) {
-             r.getMap()._infoWindow = new google.maps.InfoWindow();
-             // r.getMap()._infoWindow = wikiData(e);
-         }
+                 } else {
+                     infoWindow.setContent(e);
+                     infoWindow.open(map, r);
+                     return;
 
-         r.getMap()._infoWindow.close();
+                 }
+             },
+             error: function(e) {
+                 setTimeout(function() {
+                     infoWindow.setContent("对不起，无法连接到Wikipedia");
+                     infoWindow.open(map, r);
+                     return;
+                 }, 750)
+
+             }
+         });
+
+         infoWindow.close();
          stopAnimation(r);
-         r.getMap()._infoWindow.setContent(wikiData(e));
-         console.log(wikiData(e));
-         r.getMap()._infoWindow.open(r.getMap(), r);
          r.setAnimation(google.maps.Animation.BOUNCE);
-     };
+         return;
 
+     };
+     // pin的时间
      function stopAnimation(marker) {
          setTimeout(function() {
              marker.setAnimation(null);
          }, 750);
      };
-
      //过滤子集
      function stringStartsWith(string, startsWith) {
          string = string || "";
@@ -157,21 +141,11 @@
              return false;
          return string.substring(0, startsWith.length) === startsWith;
      };
-     /*function Loc(data) {
 
-         this.title = data.title;
-         this.location = data.location;
-         this.marker = data.marker;
-     };*/
-
-     markers.map(function(marker) {
-         marker.setVisible(true)
-     })
-
+     //用knock out处理页面显示
      function MyViewModel() {
          var self = this;
          var reg = /[\u4E00-\u9FA5\uF900-\uFA2D]/;
-
          self.query = ko.observable('');
          self.locList = ko.observableArray(favorites);
          var unwrappedLocList = ko.toJS(self.locList);
@@ -183,7 +157,11 @@
              var filter = self.query();
              if (!filter) {
 
-                 return unwrappedLocList;
+                 ko.utils.arrayForEach(self.locList, function(item) {
+                     item.marker.setVisible(true);
+                 });
+                 return self.locList();
+                 // return unwrappedLocList;
 
              } else if (reg.test(filter)) {
 
@@ -195,11 +173,9 @@
                          return marker.title == item[0]
                      })
                      marker.setVisible(matched)
-                     return matched
+                     return matched;
                  })
-
                  return filteredList; // 返回筛选后的地点列表
-
              }
          }, this);
 
@@ -211,7 +187,7 @@
              } else if (!reg.test(filter)) {
                  alert("请输入中文");
              } else {
-                 this.filteredlocList = ko.observableArray(favorites2);
+                 this.filteredlocList = ko.observableArray(filteredlocList);
              }
          };
 
@@ -219,24 +195,28 @@
 
              var unwrappedLoc = ko.toJS(clickedLoc);
              var unwrappedLocList = ko.toJS(self.locList);
-             for (var i = 0; i < unwrappedLocList.length; i++) {
-                 if (unwrappedLoc[0] == markers[i].title) {
-                     pinMarker(unwrappedLoc[0], markers[i]);
-                     return;
-                 }
-             };
+             var marker = markers.find(function(item) {
+                 return unwrappedLoc[0] == item.title
+             })
+             pinMarker(unwrappedLoc[0], marker);
+
          };
 
-
-         // var marker = markers.find(function(item){
-         //     return unwrappedLoc[0] == item.title
-         // })
-         // pinMarker(unwrappedLoc[0], marker);
+         //左边列表显示和消失
+         self.listVisible = ko.observable(true);
+         self.isActive = ko.observable(false);
+         self.toggle1 = function() {
+             self.listVisible(!self.listVisible());
+             self.isActive(!self.isActive());
+         }
 
      }
 
+
      ko.applyBindings(new MyViewModel());
-     if (typeof google !== "object") {
+
+     //判断是不是可以加载Google API(为什么不成功呢？)
+     if (typeof google == "undefined") {
          $("h3").html("对不起，页面无法加载");
      } else {
          $("h3").html("地点筛选");

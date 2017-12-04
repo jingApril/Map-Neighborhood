@@ -9,27 +9,12 @@
     <meta name="description" content="neighborhood-search">
     <meta name="keywords" content="neighborhood-search">
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <style type="text/css">
-html,
-body { height: 100%; margin: 0; padding: 0; background: #333; }
-#filter { width: 30%; height: 100%; float: left; }
-input { width: 80%; }
-input[type=text] { text-align: left; }
-button { }
-ul { width: 100%; height: 100%; -webkit-margin-before: 0em; -webkit-padding-start: 0px; margin-top: 4%; }
-ul,
-li { color: #fff; list-style: none; }
-li { padding: 0.2em; background: #ccc; margin-bottom: 1%; width: 100%; color: #000; font-family: "微软雅黑"; }
-li:hover { cursor: pointer; background: green; }
-h3 { color: #fff; font-size: 1.22em; text-align: center; }
-h4 { color: #000; font-size: 1.0em; font-family: "微软雅黑"; font-weight: 400; text-align: center; }
-#map { width: 70%; float: right; height: 100%; }
-    </style>
+    <link href="css/index.css" rel="stylesheet">
 </head>
 
 <body>
-
-    <div id="filter">
+    <div id="sidebar-button" data-bind="click: toggle1"></div>
+    <div id="filter" data-bind="visible: listVisible">
         <h3></h3>
         <input placeholder="Search…" class="btn btn-default" type="text" data-bind="textInput: query">
         <button type="submit" class="btn btn-default" value="Submit" data-bind="submit: filterClick">筛选</button>
@@ -37,8 +22,7 @@ h4 { color: #000; font-size: 1.0em; font-family: "微软雅黑"; font-weight: 40
             <li data-bind="text: $data[0], click: $parent.setLoc"></li>
         </ul>
     </div>
-    <div id="map"></div>
-
+    <div id="map" data-bind="style: {width :isActive() ? '100%' : '70%'}"></div>
     <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js">
     </script>
     <script async defer src="http://maps.google.com/maps/api/js?region=cn&language=zh-CN&key=AIzaSyBfkRj2brmbXXJ-hZORPHjUT_9G0sI8wEA&v=3&callback=initMap">
